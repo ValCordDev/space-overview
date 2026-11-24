@@ -13,11 +13,12 @@ func bytes(_ n: UInt64) -> String { Int64(clamping: n).formatted(.byteCount(styl
 
 struct Row: Identifiable { let entry: Entry, depth: Int, share: Double; var id: String { entry.id } }
 
-enum Page: String, CaseIterable { case home = "Home", disk = "Macintosh HD", apps = "Apps", largest = "Largest files", oldest = "Oldest files" }
+enum Page: String, CaseIterable { case home = "Home", disk = "Macintosh HD", apps = "Apps", map = "Map", largest = "Largest files", oldest = "Oldest files" }
 
 @MainActor final class Model: ObservableObject {
     @Published var page = Page.home
     @Published var filter = ""
+    @Published var mapPath = NSHomeDirectory()
     @Published var selected: Entry?
     @Published var selectedApp: String?
     @Published var expanded: Set<String> = []
@@ -116,6 +117,7 @@ struct ContentView: View {
                 if m.needsAccess { AccessView() }
                 else if !m.ready { ScanningView() }
                 else if m.page == .apps { AppsView() }
+                else if m.page == .map { MapView() }
                 else { FilesView() }
             }.frame(maxWidth: .infinity, maxHeight: .infinity) }
         }
@@ -148,7 +150,7 @@ struct Sidebar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             heading("Locations"); item(.home, "house"); item(.disk, "internaldrive")
-            heading("Explore").padding(.top, 14); item(.apps, "square.grid.2x2"); item(.largest, "arrow.down.doc"); item(.oldest, "clock")
+            heading("Explore").padding(.top, 14); item(.apps, "square.grid.2x2"); item(.map, "rectangle.split.2x2"); item(.largest, "arrow.down.doc"); item(.oldest, "clock")
             Spacer()
             let d = disk
             VStack(alignment: .leading, spacing: 8) {
@@ -215,13 +217,14 @@ struct Header: View {
     let title: String, detail: String
     var reveal: String?
     var edits = false
+    var searches = true
     var body: some View {
         HStack(spacing: 10) {
             Text(title).font(.title2.bold())
             Text(detail).font(.title2).lineLimit(1).foregroundStyle(Color.dim)
             Spacer()
-            TextField("Filter by name", text: $m.filter).textFieldStyle(.plain).padding(.horizontal, 11).frame(minWidth: 90, maxWidth: 180).frame(height: 34)
-                .background(Color.card, in: .rect(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.edge))
+            if searches { TextField("Filter by name", text: $m.filter).textFieldStyle(.plain).padding(.horizontal, 11).frame(minWidth: 90, maxWidth: 180).frame(height: 34)
+                .background(Color.card, in: .rect(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.edge)) }
             if edits {
                 let locked = m.selectedLock() != nil
                 if m.page == .home || m.page == .disk {

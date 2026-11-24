@@ -194,6 +194,7 @@ extension Model {
             engine?.renamed(p.entry, to: n)
             let new = ((old as NSString).deletingLastPathComponent as NSString).appendingPathComponent(n)
             expanded = Set(expanded.map { $0 == old ? new : $0.hasPrefix(old + "/") ? new + $0.dropFirst(old.count) : $0 })
+            if mapPath == old { mapPath = new } else if mapPath.hasPrefix(old + "/") { mapPath = new + mapPath.dropFirst(old.count) }
             lastTrash = [] // saved original paths may no longer be right
             notice = nil
             selected = nil

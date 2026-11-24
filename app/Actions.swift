@@ -154,6 +154,13 @@ func selfTest() -> Bool {
         expect(lockReason(p) == nil, "allowed: " + p.replacingOccurrences(of: home, with: "~"))
     }
     expect(lockReason((Bundle.main.bundlePath as NSString).deletingLastPathComponent) != nil, "locked: folder holding this app")
+    let frame = CGRect(x: 10, y: 20, width: 800, height: 500), weights: [Double] = [60, 40, 25, 12, 9, 3, 1, 1]
+    let cells = treemap(weights, in: frame)
+    expect(cells.count == 8 && zip(cells, weights).allSatisfy { abs(Double($0.width * $0.height) - $1 / 151 * 400_000) < 1 }, "map: areas match sizes")
+    expect(cells.allSatisfy { frame.insetBy(dx: -0.01, dy: -0.01).contains($0) }, "map: blocks stay inside")
+    expect(cells.indices.allSatisfy { i in cells.indices.allSatisfy { j in
+        let o = cells[i].intersection(cells[j]); return i == j || o.isNull || o.width * o.height < 0.01 } }, "map: blocks don't overlap")
+    expect(treemap([], in: frame).isEmpty && treemap([0, 0], in: frame).count == 2, "map: empty folders")
     let dir = home + "/Library/Caches/space-overview-selftest-" + UUID().uuidString
     do {
         try fm.createDirectory(atPath: dir, withIntermediateDirectories: false)
